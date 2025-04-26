@@ -76,3 +76,5 @@ DerivedDataCache/*
 Content/*
 
 Platforms/*
+
+Config/DefaultEngine.ini
