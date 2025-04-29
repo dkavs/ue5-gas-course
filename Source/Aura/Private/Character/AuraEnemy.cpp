@@ -1,7 +1,7 @@
 // Copyright Giant Rocket Games
 
-#include "Aura/Aura.h"
 #include "Character/AuraEnemy.h"
+#include "Aura/Aura.h"
 #include "AbilitySystem/AuraAbilitySystemComponent.h"
 #include "AbilitySystem/AuraAttributeSet.h"
 

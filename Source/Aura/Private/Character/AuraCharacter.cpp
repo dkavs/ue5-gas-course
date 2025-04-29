@@ -1,9 +1,9 @@
 // Copyright Giant Rocket Games
 
+#include "Character/AuraCharacter.h"
 #include "Player/AuraPlayerState.h"
 #include "AbilitySystem/AuraAbilitySystemComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Character/AuraCharacter.h"
 
 AAuraCharacter::AAuraCharacter()
 {
@@ -19,10 +19,10 @@ AAuraCharacter::AAuraCharacter()
 	bUseControllerRotationYaw = false;
 }
 
+// Called on the client once the possessed pawn gets a player state
 void AAuraCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
-
 	InitAbilityActorInfo();
 }
 
