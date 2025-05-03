@@ -34,5 +34,6 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Abilities")
 	TObjectPtr<UAttributeSet> AttributeSet;
 
-	
+	virtual void InitAbilityActorInfo();
+
 };
