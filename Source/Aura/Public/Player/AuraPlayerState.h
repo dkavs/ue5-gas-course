@@ -23,11 +23,21 @@ public:
 	// Inherited via IAbilitySystemInterface
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
+
 	UAttributeSet* GetAttributeSet() const { return AttributeSet; }
 
+	FORCEINLINE int32 GetPlayerLevel() const { return PlayerLevel; }
+
 protected:
-	UPROPERTY(EditAnywhere, Category = "Abilities")
+	UPROPERTY(VisibleAnywhere, Category = "Abilities")
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
-	UPROPERTY(EditAnywhere, Category = "Abilities")
+	UPROPERTY(VisibleAnywhere, Category = "Abilities")
 	TObjectPtr<UAttributeSet> AttributeSet;
+
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing=OnRep_Level)
+	int32 PlayerLevel = 1;
+
+	UFUNCTION()
+	void OnRep_Level(int32 OldLevel);
 };
