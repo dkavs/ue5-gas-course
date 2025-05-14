@@ -6,11 +6,29 @@
 #include "GameplayEffectExtension.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "AuraGameplayTags.h"
 
 UAuraAttributeSet::UAuraAttributeSet()
 {
 	InitHealth(100.f);
 	InitMana(50.f);
+
+	const FAuraGameplayTags Tags = FAuraGameplayTags::Get();
+
+	TagsToAttributes.Add(Tags.Attributes_Primary_Strength, UAuraAttributeSet::GetStrengthAttribute);
+	TagsToAttributes.Add(Tags.Attributes_Primary_Intelligence, UAuraAttributeSet::GetIntelligenceAttribute);
+	TagsToAttributes.Add(Tags.Attributes_Primary_Resilience, UAuraAttributeSet::GetResilienceAttribute);
+	TagsToAttributes.Add(Tags.Attributes_Primary_Vigor, UAuraAttributeSet::GetVigorAttribute);
+	TagsToAttributes.Add(Tags.Attributes_Secondary_Armor, UAuraAttributeSet::GetArmorAttribute);
+	TagsToAttributes.Add(Tags.Attributes_Secondary_ArmorPenetration, UAuraAttributeSet::GetArmorPenetrationAttribute);
+	TagsToAttributes.Add(Tags.Attributes_Secondary_BlockChance, UAuraAttributeSet::GetBlockChanceAttribute);
+	TagsToAttributes.Add(Tags.Attributes_Secondary_CritChance, UAuraAttributeSet::GetCritChanceAttribute);
+	TagsToAttributes.Add(Tags.Attributes_Secondary_CritDamage, UAuraAttributeSet::GetCritDamageAttribute);
+	TagsToAttributes.Add(Tags.Attributes_Secondary_CritResist, UAuraAttributeSet::GetCritResistAttribute);
+	TagsToAttributes.Add(Tags.Attributes_Secondary_HealthRegen, UAuraAttributeSet::GetHealthRegenAttribute);
+	TagsToAttributes.Add(Tags.Attributes_Secondary_ManaRegen, UAuraAttributeSet::GetManaRegenAttribute);
+	TagsToAttributes.Add(Tags.Attributes_Secondary_MaxHealth, UAuraAttributeSet::GetMaxHealthAttribute);
+	TagsToAttributes.Add(Tags.Attributes_Secondary_MaxMana, UAuraAttributeSet::GetMaxManaAttribute);
 }
 
 void UAuraAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
