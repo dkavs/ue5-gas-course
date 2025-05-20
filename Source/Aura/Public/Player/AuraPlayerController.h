@@ -12,6 +12,8 @@ class UInputMappingContext;
 class UInputAction;
 class IInteractableInterface;
 class UAuraInputConfig;
+class UAuraAbilitySystemComponent;
+class USplineComponent;
 struct FInputActionValue;
 /**
  * 
@@ -45,4 +47,26 @@ private:
 	
 	TScriptInterface<IInteractableInterface> LastActor;
 	TScriptInterface<IInteractableInterface> ThisActor;
+	FHitResult CursorHit;
+
+
+	UPROPERTY()
+	TObjectPtr<UAuraAbilitySystemComponent> AuraASC;
+
+	UAuraAbilitySystemComponent* GetASC();
+	void AutoRun();
+
+
+	FVector CachedDestination = FVector::ZeroVector;
+	float FollowTime = 0.f;
+
+	float ShortPressThreshold = 0.5f;
+	bool bAutoRunning = false;
+	bool bTargeting = false;
+
+	UPROPERTY(EditDefaultsOnly)
+	float AutoRunAcceptanceRadiance = 50.f;
+
+	UPROPERTY()
+	TObjectPtr<USplineComponent> Spline;
 };
