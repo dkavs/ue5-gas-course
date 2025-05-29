@@ -6,6 +6,7 @@
 #include "GameplayEffectExtension.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "Interaction/CombatInterface.h"
 #include "AuraGameplayTags.h"
 
 UAuraAttributeSet::UAuraAttributeSet()
@@ -93,12 +94,42 @@ void UAuraAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
 		SetHealth(FMath::Clamp(GetHealth(), 0, GetMaxHealth()));
+		UE_LOG(LogTemp, Warning, TEXT("Changed Health on %s. Health %f"), *EffectProperties.TargetAvatarActor->GetName(), GetHealth());
 	}
 	else if (Data.EvaluatedData.Attribute == GetManaAttribute())
 	{
 		SetHealth(FMath::Clamp(GetMana(), 0, GetMaxMana()));
 	}
 	
+
+	if (Data.EvaluatedData.Attribute == GetIncomingDamageAttribute())
+	{
+		const float LocalIncoming = GetIncomingDamage();
+		SetIncomingDamage(0.f);
+
+		if (LocalIncoming > 0.f)
+		{
+			const float NewHealth = GetHealth() - LocalIncoming;
+			SetHealth(FMath::Clamp(NewHealth, 0.f, GetMaxHealth()));
+
+			const bool bFatal = NewHealth <= 0.f;
+			if (bFatal)
+			{
+				ICombatInterface* CombatInterface = Cast<ICombatInterface>(EffectProperties.TargetAvatarActor);
+
+				if (CombatInterface)
+				{
+					CombatInterface->Die();
+				}
+			}
+			else
+			{
+				FGameplayTagContainer TagContainer;
+				TagContainer.AddTag(FAuraGameplayTags::Get().Effects_HitReact);
+				EffectProperties.TargetASC->TryActivateAbilitiesByTag(TagContainer);
+			}
+		}
+	}
 }
 
 void UAuraAttributeSet::SetEffectProperties(const FGameplayEffectModCallbackData& Data, FEffectProperties& Props) const

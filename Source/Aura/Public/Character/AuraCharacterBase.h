@@ -12,6 +12,8 @@ class UAbilitySystemComponent;
 class UAttributeSet;
 class UGameplayEffect;
 class UGameplayAbility;
+class UMotionWarpingComponent;
+class UAnimMontage;
 
 UCLASS(Abstract)
 class AURA_API AAuraCharacterBase : public ACharacter, public IAbilitySystemInterface, public ICombatInterface
@@ -26,6 +28,15 @@ public:
 
 	UAttributeSet* GetAttributeSet() const { return AttributeSet; }
 
+	void UpdateFacingTarget_Implementation(const FVector& Location) override;
+
+	virtual UAnimMontage* GetHitReactMontage_Implementation() override;
+
+	virtual void Die() override;
+	
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void MulticastHandleDeath();
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -35,7 +46,17 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	FName WeaponTipSocketName;
 
+
+
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	TObjectPtr<UMotionWarpingComponent> MotionWarpingComponent;
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	FName MWFaceTargetName = FName("FacingTarget");
+
+
 	virtual FVector GetCombatSocketLocation() override;
+	virtual void InitializeDefaultAttributes();
+
 
 	UPROPERTY(EditAnywhere, Category = "Abilities")
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
@@ -55,7 +76,6 @@ protected:
 	TSubclassOf<UGameplayEffect> InitialVitalAttributes;
 
 
-	void InitializeDefaultAttributes() const;
 
 	void ApplyEffectToSelf(TSubclassOf<UGameplayEffect> Effect, float Level) const;
 
@@ -65,5 +85,8 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Attributes")
 	TArray<TSubclassOf<UGameplayAbility>> StartupAbilities;
+
+	UPROPERTY(EditAnywhere, Category = "Montages")
+	TObjectPtr<UAnimMontage> HitReactMontage;
 
 };
