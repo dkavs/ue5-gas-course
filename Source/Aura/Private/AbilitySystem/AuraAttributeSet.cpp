@@ -8,11 +8,13 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Interaction/CombatInterface.h"
 #include "AuraGameplayTags.h"
+#include "Kismet/GameplayStatics.h"
+#include "Player/AuraPlayerController.h"
 
 UAuraAttributeSet::UAuraAttributeSet()
 {
-	InitHealth(100.f);
-	InitMana(50.f);
+	//InitHealth(100.f);
+	//InitMana(50.f);
 
 	const FAuraGameplayTags Tags = FAuraGameplayTags::Get();
 
@@ -128,6 +130,8 @@ void UAuraAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 				TagContainer.AddTag(FAuraGameplayTags::Get().Effects_HitReact);
 				EffectProperties.TargetASC->TryActivateAbilitiesByTag(TagContainer);
 			}
+
+			ShowFloatingText(EffectProperties, LocalIncoming);
 		}
 	}
 }
@@ -168,6 +172,18 @@ void UAuraAttributeSet::SetEffectProperties(const FGameplayEffectModCallbackData
 		Props.TargetController = Data.Target.AbilityActorInfo->PlayerController.Get();
 		Props.TargetCharacter = Cast<ACharacter>(TargetAvatarActor);
 		Props.TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetAvatarActor);
+	}
+}
+
+void UAuraAttributeSet::ShowFloatingText(const FEffectProperties& EffectProperties, float Damage) const
+{
+	if (EffectProperties.SourceCharacter != EffectProperties.TargetCharacter)
+	{
+		AAuraPlayerController* APC = Cast<AAuraPlayerController>(UGameplayStatics::GetPlayerController(EffectProperties.SourceCharacter, 0));
+		if (APC)
+		{
+			APC->ShowDamageNumber(Damage, EffectProperties.TargetCharacter);
+		}
 	}
 }
 

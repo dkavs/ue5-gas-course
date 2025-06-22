@@ -188,4 +188,5 @@ public:
 private:
 	void SetEffectProperties(const FGameplayEffectModCallbackData& Data, FEffectProperties& Props) const;
 
+	void ShowFloatingText(const FEffectProperties& EffectProperties, float Damage) const;
 };
