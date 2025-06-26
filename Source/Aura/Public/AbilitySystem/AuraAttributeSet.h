@@ -125,6 +125,23 @@ public:
 	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, MaxHealth);
 
 
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_FireResist, Category = "Secondary Attributes")
+		FGameplayAttributeData FireResist;
+	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, FireResist);
+
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_ArcaneResist, Category = "Secondary Attributes")
+		FGameplayAttributeData ArcaneResist;
+	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, ArcaneResist);
+
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_LightningResist, Category = "Secondary Attributes")
+		FGameplayAttributeData LightningResist;
+	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, LightningResist);
+
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_PhysicalResist, Category = "Secondary Attributes")
+		FGameplayAttributeData PhysicalResist;
+	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, PhysicalResist);
+
+
 	/*
 	*	Vital Attributes (Health / Mana)
 	*/
@@ -185,8 +202,17 @@ public:
 	UFUNCTION()
 	void OnRep_ManaRegen(const FGameplayAttributeData& OldManaRegen) const;
 
+	UFUNCTION()
+	void OnRep_FireResist(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION()
+	void OnRep_ArcaneResist(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION()
+	void OnRep_LightningResist(const FGameplayAttributeData& OldValue) const;
+	UFUNCTION()
+	void OnRep_PhysicalResist(const FGameplayAttributeData& OldValue) const;
+
 private:
 	void SetEffectProperties(const FGameplayEffectModCallbackData& Data, FEffectProperties& Props) const;
 
-	void ShowFloatingText(const FEffectProperties& EffectProperties, float Damage) const;
+	void ShowFloatingText(const FEffectProperties& EffectProperties, float Damage, bool bIsBlocked, bool bIsCrit) const;
 };

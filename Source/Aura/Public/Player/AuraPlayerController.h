@@ -29,7 +29,7 @@ public:
 	virtual void PlayerTick(float DeltaTime) override;
 
 	UFUNCTION(Client, Reliable)
-	void ShowDamageNumber(float Damage, ACharacter* TargetCharacter);
+	void ShowDamageNumber(float Damage, ACharacter* TargetCharacter, bool bIsBlocked, bool bIsCrit);
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
