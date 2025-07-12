@@ -27,16 +27,26 @@ public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 	UAttributeSet* GetAttributeSet() const { return AttributeSet; }
-
-	void UpdateFacingTarget_Implementation(const FVector& Location) override;
-
-	virtual UAnimMontage* GetHitReactMontage_Implementation() override;
-
-	virtual void Die() override;
 	
 	UFUNCTION(NetMulticast, Reliable)
 	virtual void MulticastHandleDeath();
 
+
+	/* ICombatInterface */
+	virtual void Die() override;
+	virtual void UpdateFacingTarget_Implementation(const FVector& Location) override;
+	virtual UAnimMontage* GetHitReactMontage_Implementation() override;
+
+	virtual void SetCombatTarget_Implementation(AActor* CombatActor) override;
+	virtual AActor* GetCombatTarget_Implementation() const override;
+	virtual bool IsDead_Implementation() const override;
+	virtual AActor* GetAvatar_Implementation() override;
+	virtual FVector GetCombatSocketLocation_Implementation(const FGameplayTag& MontageTag) override;
+	virtual TArray<FTaggedMontage> GetAttackMontages_Implementation() override;
+	/* End ICombatInterface */
+
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	TArray<FTaggedMontage> AttackMontages;
 protected:
 	virtual void BeginPlay() override;
 
@@ -46,15 +56,24 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	FName WeaponTipSocketName;
 
-
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	FName LeftHandSocketName;
 
 	UPROPERTY(EditAnywhere, Category = "Combat")
+	FName RightHandSocketName;
+
+	AActor* CombatTargetActor;
+
+	bool bDead = false;
+	
+
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Combat")
 	TObjectPtr<UMotionWarpingComponent> MotionWarpingComponent;
-	UPROPERTY(EditAnywhere, Category = "Combat")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Combat")
 	FName MWFaceTargetName = FName("FacingTarget");
 
-
-	virtual FVector GetCombatSocketLocation() override;
+	
 	virtual void InitializeDefaultAttributes();
 
 

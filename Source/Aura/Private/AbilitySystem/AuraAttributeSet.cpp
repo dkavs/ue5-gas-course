@@ -193,10 +193,18 @@ void UAuraAttributeSet::ShowFloatingText(const FEffectProperties& EffectProperti
 {
 	if (EffectProperties.SourceCharacter != EffectProperties.TargetCharacter)
 	{
-		AAuraPlayerController* APC = Cast<AAuraPlayerController>(UGameplayStatics::GetPlayerController(EffectProperties.SourceCharacter, 0));
+		AAuraPlayerController* APC = Cast<AAuraPlayerController>(EffectProperties.SourceCharacter->Controller);
 		if (APC)
 		{
 			APC->ShowDamageNumber(Damage, EffectProperties.TargetCharacter, bIsBlocked, bIsCrit);
+		}
+		else
+		{
+			APC = Cast<AAuraPlayerController>(EffectProperties.TargetCharacter->Controller);
+			if (APC)
+			{
+				APC->ShowDamageNumber(Damage, EffectProperties.TargetCharacter, bIsBlocked, bIsCrit);
+			}
 		}
 	}
 }

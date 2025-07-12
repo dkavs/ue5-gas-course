@@ -53,4 +53,11 @@ void FAuraGameplayTags::InitializeNativeGameplayTags()
 	GameplayTags.DamageTypesToResistances.Add(GameplayTags.Damage_Physical, GameplayTags.Attributes_Resistance_Physical);
 
 	GameplayTags.Effects_HitReact = UGameplayTagsManager::Get().AddNativeGameplayTag(FName("Effects.HitReact"));
+
+
+	GameplayTags.Abilities_Attack = UGameplayTagsManager::Get().AddNativeGameplayTag(FName("Abilities.Attack"));
+
+	GameplayTags.Montage_Attack_Weapon = UGameplayTagsManager::Get().AddNativeGameplayTag(FName("Montage.Attack.Weapon"));
+	GameplayTags.Montage_Attack_Hand_L = UGameplayTagsManager::Get().AddNativeGameplayTag(FName("Montage.Attack.Hand.L"));
+	GameplayTags.Montage_Attack_Hand_R = UGameplayTagsManager::Get().AddNativeGameplayTag(FName("Montage.Attack.Hand.R"));
 }

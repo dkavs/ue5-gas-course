@@ -10,6 +10,8 @@
 #include "AuraEnemy.generated.h"
 
 class UWidgetComponent;
+class UBehaviorTree;
+class AAuraAIController;
 
 /**
  * 
@@ -21,6 +23,7 @@ class AURA_API AAuraEnemy : public AAuraCharacterBase, public IInteractableInter
 	
 public:
 	AAuraEnemy();
+	virtual void PossessedBy(AController* NewController) override;
 	// Inherited via IInteractableInterface
 	virtual void Highlight() override;
 	virtual void UnHighlight() override;
@@ -42,7 +45,7 @@ public:
 	bool bHitReacting = false;
 
 	// TODO: THis should be done in GAS!
-	UPROPERTY(BlueprintReadOnly, Category = "Combat")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
 	float BaseWalkSpeed = 250.f;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Combat")
@@ -63,5 +66,12 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UWidgetComponent> WidgetComponent;
+
+
+	UPROPERTY(EditDefaultsOnly, Category = "AI")
+	TObjectPtr<UBehaviorTree> BehaviorTree;
+
+	UPROPERTY()
+	TObjectPtr<AAuraAIController> AuraAIController;
 
 };

@@ -49,6 +49,12 @@ public:
 	FGameplayTag Damage_Lightning;
 	FGameplayTag Damage_Physical;
 
+	FGameplayTag Abilities_Attack;
+
+	FGameplayTag Montage_Attack_Weapon;
+	FGameplayTag Montage_Attack_Hand_L;
+	FGameplayTag Montage_Attack_Hand_R;
+
 	
 
 	TMap<FGameplayTag, FGameplayTag> DamageTypesToResistances;

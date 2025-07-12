@@ -8,6 +8,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
+#include "AbilitySystem/AuraAbilitySYstemLibrary.h"
 #include "Aura/Aura.h"
 
 AAuraProjectile::AAuraProjectile()
@@ -56,6 +57,18 @@ void AAuraProjectile::Destroyed()
 
 void AAuraProjectile::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+
+	if (DamageEffectSpecHandle.Data.IsValid() && DamageEffectSpecHandle.Data.Get()->GetContext().GetEffectCauser() == OtherActor)
+	{
+		return;
+	}
+
+	if (!UAuraAbilitySystemLibrary::IsNotFriendly(DamageEffectSpecHandle.Data.Get()->GetContext().GetEffectCauser(), OtherActor))
+	{
+		return;
+	}
+	
+
 	PlayImpactEffects();
 
 	// Unclear if Destroy or OnSphereOverlap will trigger in the client first
@@ -77,8 +90,11 @@ void AAuraProjectile::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, 
 
 void AAuraProjectile::PlayImpactEffects()
 {
-	UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation(), FRotator::ZeroRotator);
-	UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ImpactEffect, GetActorLocation());
+	if (!bHit)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation(), FRotator::ZeroRotator);
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ImpactEffect, GetActorLocation());
+	}
 }
 
 

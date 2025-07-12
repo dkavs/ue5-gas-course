@@ -21,9 +21,10 @@ void UAuraProjectileAbility::SpawnProjectile(const FVector& TargetLocation)
 
 	if (CombatInterface)
 	{
-		const FVector SocketLocation = CombatInterface->GetCombatSocketLocation();
+		const FVector SocketLocation = ICombatInterface::Execute_GetCombatSocketLocation(AvatarActor, FAuraGameplayTags::Get().Montage_Attack_Weapon);
 		FRotator Rotation = (TargetLocation - SocketLocation).Rotation();
-		Rotation.Pitch = 0.f;
+		// This was causing issues on Multiplayer where projectiles sometimes were above enemies
+		//Rotation.Pitch = 0.f;
 
 		FTransform SpawnTransform;
 		SpawnTransform.SetLocation(SocketLocation);

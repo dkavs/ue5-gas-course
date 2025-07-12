@@ -7,6 +7,7 @@
 #include "Components/CapsuleComponent.h"
 #include "MotionWarpingComponent.h"
 #include "Aura/Aura.h"
+#include "AuraGameplayTags.h"
 
 AAuraCharacterBase::AAuraCharacterBase()
 {
@@ -51,6 +52,7 @@ void AAuraCharacterBase::Die()
 
 void AAuraCharacterBase::MulticastHandleDeath_Implementation()
 {
+	bDead = true;
 	Weapon->SetSimulatePhysics(true);
 	Weapon->SetEnableGravity(true);
 	Weapon->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
@@ -65,20 +67,60 @@ void AAuraCharacterBase::MulticastHandleDeath_Implementation()
 	Dissolve();
 }
 
+void AAuraCharacterBase::SetCombatTarget_Implementation(AActor* CombatActor)
+{
+	CombatTargetActor = CombatActor;
+}
+
+AActor* AAuraCharacterBase::GetCombatTarget_Implementation() const
+{
+	return CombatTargetActor;
+}
+
+bool AAuraCharacterBase::IsDead_Implementation() const
+{
+	return bDead;
+}
+
+AActor* AAuraCharacterBase::GetAvatar_Implementation()
+{
+	return this;
+}
+
 void AAuraCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
 	
 }
 
-FVector AAuraCharacterBase::GetCombatSocketLocation()
+FVector AAuraCharacterBase::GetCombatSocketLocation_Implementation(const FGameplayTag& MontageTag)
 {
-	check(Weapon);
-	return Weapon->GetSocketLocation(WeaponTipSocketName);
+	// TODO: Return socket based on montage tag
+	// Proper solution would be a TMap<FGameplayTag, SocketName> but going to KISS for now
+	const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
+	if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_Weapon) && IsValid(Weapon))
+	{
+		return Weapon->GetSocketLocation(WeaponTipSocketName);
+	}
+	else if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_Hand_L))
+	{
+		return GetMesh()->GetSocketLocation(LeftHandSocketName);
+	}
+	else if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_Hand_R))
+	{
+		return GetMesh()->GetSocketLocation(RightHandSocketName);
+	}
+
+	return FVector();
+}
+
+TArray<FTaggedMontage> AAuraCharacterBase::GetAttackMontages_Implementation()
+{
+	return AttackMontages;
 }
 
 void AAuraCharacterBase::InitAbilityActorInfo()
-{
+{	
 }
 
 void AAuraCharacterBase::InitializeDefaultAttributes()

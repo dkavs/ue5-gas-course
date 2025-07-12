@@ -32,7 +32,7 @@ void AAuraPlayerController::PlayerTick(float DeltaTime)
 void AAuraPlayerController::ShowDamageNumber_Implementation(float Damage, ACharacter* TargetCharacter, bool bIsBlocked, bool bIsCrit)
 {
 	// IsValid checks for is pending kill. Implicit check skips that
-	if (IsValid(TargetCharacter) && DamageTextComponentClass)
+	if (IsValid(TargetCharacter) && DamageTextComponentClass && IsLocalController())
 	{
 		UDamageTextComponent* DamageText = NewObject<UDamageTextComponent>(TargetCharacter, DamageTextComponentClass);
 		DamageText->RegisterComponent();
