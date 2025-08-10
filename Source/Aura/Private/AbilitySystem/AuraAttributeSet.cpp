@@ -8,15 +8,14 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystem/AuraAbilitySystemLibrary.h"
 #include "Interaction/CombatInterface.h"
+#include "Interaction/PlayerInterface.h"
 #include "AuraGameplayTags.h"
 #include "Kismet/GameplayStatics.h"
 #include "Player/AuraPlayerController.h"
+#include "Player/AuraPlayerState.h"
 
 UAuraAttributeSet::UAuraAttributeSet()
 {
-	//InitHealth(100.f);
-	//InitMana(50.f);
-
 	const FAuraGameplayTags Tags = FAuraGameplayTags::Get();
 
 	TagsToAttributes.Add(Tags.Attributes_Primary_Strength, UAuraAttributeSet::GetStrengthAttribute);
@@ -108,11 +107,12 @@ void UAuraAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
 		SetHealth(FMath::Clamp(GetHealth(), 0, GetMaxHealth()));
-		UE_LOG(LogTemp, Warning, TEXT("Changed Health on %s. Health %f"), *EffectProperties.TargetAvatarActor->GetName(), GetHealth());
+		UE_LOG(LogTemp, Warning, TEXT("Changed Health on %s. Health %f / %f"), *EffectProperties.TargetAvatarActor->GetName(), GetHealth(), GetMaxHealth());
 	}
 	else if (Data.EvaluatedData.Attribute == GetManaAttribute())
 	{
-		SetHealth(FMath::Clamp(GetMana(), 0, GetMaxMana()));
+		SetMana(FMath::Clamp(GetMana(), 0, GetMaxMana()));
+		UE_LOG(LogTemp, Warning, TEXT("Changed Mana on %s. Mana %f / %f : %f"), *EffectProperties.TargetAvatarActor->GetName(), GetMana(), GetMaxMana(), (GetMana() / GetMaxMana()));
 	}
 	
 
@@ -126,6 +126,7 @@ void UAuraAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 			const float NewHealth = GetHealth() - LocalIncoming;
 			SetHealth(FMath::Clamp(NewHealth, 0.f, GetMaxHealth()));
 
+			UE_LOG(LogTemp, Warning, TEXT("%s took damage! Health %f / %f : %f"), *EffectProperties.TargetAvatarActor->GetName(), GetHealth(), GetMaxHealth(), (GetHealth() / GetMaxHealth()));
 			const bool bFatal = NewHealth <= 0.f;
 			if (bFatal)
 			{
@@ -135,6 +136,9 @@ void UAuraAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 				{
 					CombatInterface->Die();
 				}
+
+				// Award EXP
+				SendExperienceEvent(EffectProperties);
 			}
 			else
 			{
@@ -146,6 +150,23 @@ void UAuraAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 			const bool bBlocked = UAuraAbilitySystemLibrary::IsBlockedHit(EffectProperties.EffectContextHandle);
 			const bool bCritical = UAuraAbilitySystemLibrary::IsCriticalHit(EffectProperties.EffectContextHandle);
 			ShowFloatingText(EffectProperties, LocalIncoming, bBlocked, bCritical);
+		}
+	}
+
+	if (Data.EvaluatedData.Attribute == GetIncomingExperienceAttribute())
+	{
+		const float LocalIncoming = GetIncomingExperience();
+		SetIncomingExperience(0.f);
+
+		if (LocalIncoming > 0.f)
+		{
+
+			// TODO: See if we should level up 
+			UE_LOG(LogTemp, Warning, TEXT("%s Gained Experience! amount %f "), *EffectProperties.TargetAvatarActor->GetName(), LocalIncoming);
+			if (EffectProperties.SourceCharacter->Implements<UPlayerInterface>())
+			{
+				IPlayerInterface::Execute_AddToExperience(EffectProperties.SourceCharacter, LocalIncoming);
+			}
 		}
 	}
 }
@@ -206,6 +227,22 @@ void UAuraAttributeSet::ShowFloatingText(const FEffectProperties& EffectProperti
 				APC->ShowDamageNumber(Damage, EffectProperties.TargetCharacter, bIsBlocked, bIsCrit);
 			}
 		}
+	}
+}
+
+void UAuraAttributeSet::SendExperienceEvent(const FEffectProperties& EffectProperties) const
+{
+	if (ICombatInterface* CombatInterface = Cast<ICombatInterface>(EffectProperties.TargetCharacter))
+	{
+		const int32 TargetLevel = CombatInterface->GetCharacterLevel();
+		const ECharacterClass TargetClass = CombatInterface->Execute_GetCharacterClass(EffectProperties.TargetCharacter);
+		const int32 Experience = UAuraAbilitySystemLibrary::GetExpForClassAndLevel(EffectProperties.TargetCharacter, TargetClass, TargetLevel);
+		const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
+
+		FGameplayEventData EventData;
+		EventData.EventMagnitude = Experience;
+		EventData.EventTag = GameplayTags.Attributes_Meta_Experience;
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(EffectProperties.SourceCharacter, GameplayTags.Attributes_Meta_Experience, EventData);
 	}
 }
 

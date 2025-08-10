@@ -24,7 +24,7 @@ UOverlayWidgetController* UAuraAbilitySystemLibrary::GetOverlayWidgetController(
             UAttributeSet* AS = PS->GetAttributeSet();
             const FWidgetControllerParams WidgetControllerParams(PC, PS, ASC, AS);
 
-            return AuraHUD->GetOverlayWidgetControler(WidgetControllerParams);
+            return AuraHUD->GetOverlayWidgetController(WidgetControllerParams);
         }
     }
     
@@ -43,7 +43,7 @@ UAttributeMenuWidgetController* UAuraAbilitySystemLibrary::GetAttributeMenuWidge
             UAttributeSet* AS = PS->GetAttributeSet();
             const FWidgetControllerParams WidgetControllerParams(PC, PS, ASC, AS);
 
-            return AuraHUD->GetAttributeMenuWidgetControler(WidgetControllerParams);
+            return AuraHUD->GetAttributeMenuWidgetController(WidgetControllerParams);
         }
     }
 
@@ -102,6 +102,20 @@ void UAuraAbilitySystemLibrary::GiveStartupAbilities(const UObject* WorldContext
         FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(AbilityClass, CharacterLevel);
         ASC->GiveAbility(AbilitySpec);
     }
+}
+
+int32 UAuraAbilitySystemLibrary::GetExpForClassAndLevel(const UObject* WorldContextObject, ECharacterClass CharacterClass, int32 CharacterLevel)
+{
+
+    UCharacterClassInfo* ClassInfo = GetCharacterClassInfo(WorldContextObject);
+    if (ClassInfo == nullptr)
+    {
+        return 0;
+    }
+
+    FScalableFloat ScalableExp = ClassInfo->GetClassDefaultInfo(CharacterClass).ExpReward;
+    const float ExpReward = ScalableExp.GetValueAtLevel(CharacterLevel);
+    return static_cast<int32>(ExpReward);
 }
 
 UCharacterClassInfo* UAuraAbilitySystemLibrary::GetCharacterClassInfo(const UObject* WorldContextObject)
@@ -168,8 +182,10 @@ bool UAuraAbilitySystemLibrary::IsNotFriendly(AActor* FirstActor, AActor* Second
     const bool bFirstIsEnemy = FirstActor->ActorHasTag(FName("Enemy"));
     const bool bSecondIsEnemy = SecondActor->ActorHasTag(FName("Enemy"));
     
-    return !((bFirstIsPlayer && bSecondIsEnemy) || (bFirstIsEnemy && bSecondIsEnemy));
+    return (bFirstIsPlayer && bSecondIsEnemy) || (bFirstIsEnemy && bSecondIsPlayer) || (!bSecondIsPlayer && !bSecondIsEnemy);
 }
+
+
 
 void UAuraAbilitySystemLibrary::SetIsBlockedHit(FGameplayEffectContextHandle& EffectContextHandle, bool bIsBlocked)
 {

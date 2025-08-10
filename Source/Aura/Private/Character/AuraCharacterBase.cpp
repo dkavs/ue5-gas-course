@@ -4,6 +4,7 @@
 #include "Character/AuraCharacterBase.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/AuraAbilitySystemComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Components/CapsuleComponent.h"
 #include "MotionWarpingComponent.h"
 #include "Aura/Aura.h"
@@ -34,7 +35,6 @@ void AAuraCharacterBase::UpdateFacingTarget_Implementation(const FVector& Locati
 
 	MotionWarpingComponent->AddOrUpdateWarpTargetFromLocation(MWFaceTargetName, Location);
 
-	UE_LOG(LogTemp, Warning, TEXT("AAuraCharacterBase::UpdateFacingTarget"));
 }
 
 UAnimMontage* AAuraCharacterBase::GetHitReactMontage_Implementation()
@@ -52,6 +52,8 @@ void AAuraCharacterBase::Die()
 
 void AAuraCharacterBase::MulticastHandleDeath_Implementation()
 {
+	UGameplayStatics::PlaySoundAtLocation(this, DeathSound, GetActorLocation());
+
 	bDead = true;
 	Weapon->SetSimulatePhysics(true);
 	Weapon->SetEnableGravity(true);
@@ -98,18 +100,23 @@ FVector AAuraCharacterBase::GetCombatSocketLocation_Implementation(const FGamepl
 	// TODO: Return socket based on montage tag
 	// Proper solution would be a TMap<FGameplayTag, SocketName> but going to KISS for now
 	const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
-	if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_Weapon) && IsValid(Weapon))
+	if (MontageTag.MatchesTagExact(GameplayTags.CombatSocket_Weapon) && IsValid(Weapon))
 	{
 		return Weapon->GetSocketLocation(WeaponTipSocketName);
 	}
-	else if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_Hand_L))
+	else if (MontageTag.MatchesTagExact(GameplayTags.CombatSocket_Hand_L))
 	{
 		return GetMesh()->GetSocketLocation(LeftHandSocketName);
 	}
-	else if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_Hand_R))
+	else if (MontageTag.MatchesTagExact(GameplayTags.CombatSocket_Hand_R))
 	{
 		return GetMesh()->GetSocketLocation(RightHandSocketName);
 	}
+	else if (MontageTag.MatchesTagExact(GameplayTags.CombatSocket_Tail))
+	{
+		return GetMesh()->GetSocketLocation(TailSocketName);
+	}
+
 
 	return FVector();
 }
@@ -117,6 +124,38 @@ FVector AAuraCharacterBase::GetCombatSocketLocation_Implementation(const FGamepl
 TArray<FTaggedMontage> AAuraCharacterBase::GetAttackMontages_Implementation()
 {
 	return AttackMontages;
+}
+
+UNiagaraSystem* AAuraCharacterBase::GetHitEffect_Implementation()
+{
+	return HitEffect;
+}
+
+FTaggedMontage AAuraCharacterBase::GetTaggedMontageByTag_Implementation(const FGameplayTag& MontageTag)
+{
+	for (FTaggedMontage TaggedMontage : AttackMontages)
+	{
+		if (TaggedMontage.MontageTag == MontageTag)
+		{
+			return TaggedMontage;
+		}
+	}
+	return FTaggedMontage();
+}
+
+int32 AAuraCharacterBase::GetMinionCount_Implementation()
+{
+	return MinionCount;
+}
+
+void AAuraCharacterBase::ChangeMinionCount_Implementation(int32 Amount)
+{
+	MinionCount += Amount;
+}
+
+ECharacterClass AAuraCharacterBase::GetCharacterClass_Implementation()
+{
+	return CharacterClass;
 }
 
 void AAuraCharacterBase::InitAbilityActorInfo()
@@ -159,6 +198,8 @@ void AAuraCharacterBase::AddCharacterAbilities()
 
 	UAuraAbilitySystemComponent* AuraASC = CastChecked<UAuraAbilitySystemComponent>(AbilitySystemComponent);
 	AuraASC->AddCharacterAbilities(StartupAbilities);
+	AuraASC->AddCharacterPassiveAbilities(StartupPassiveAbilities);
+	
 }
 
 void AAuraCharacterBase::Dissolve()

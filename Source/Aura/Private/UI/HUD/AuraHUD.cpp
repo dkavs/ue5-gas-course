@@ -6,7 +6,7 @@
 #include "UI/WidgetController/OverlayWidgetController.h"
 #include "UI/WidgetController/AttributeMenuWidgetController.h"
 
-UOverlayWidgetController* AAuraHUD::GetOverlayWidgetControler(const FWidgetControllerParams& WCParams)
+UOverlayWidgetController* AAuraHUD::GetOverlayWidgetController(const FWidgetControllerParams& WCParams)
 {
 	if (OverlayWidgetController == nullptr)
 	{
@@ -18,7 +18,7 @@ UOverlayWidgetController* AAuraHUD::GetOverlayWidgetControler(const FWidgetContr
 	return OverlayWidgetController;
 }
 
-UAttributeMenuWidgetController* AAuraHUD::GetAttributeMenuWidgetControler(const FWidgetControllerParams& WCParams)
+UAttributeMenuWidgetController* AAuraHUD::GetAttributeMenuWidgetController(const FWidgetControllerParams& WCParams)
 {
 	if (AttributeMenuWidgetController == nullptr)
 	{
@@ -40,7 +40,7 @@ void AAuraHUD::InitOverlay(APlayerController* PC, APlayerState* PS, UAbilitySyst
 
 	const FWidgetControllerParams WidgetControllerParams(PC, PS, ASC, AS);
 
-	UOverlayWidgetController* WidgetController = GetOverlayWidgetControler(WidgetControllerParams);
+	UOverlayWidgetController* WidgetController = GetOverlayWidgetController(WidgetControllerParams);
 	OverlayWidget->SetWidgetController(WidgetController);
 
 

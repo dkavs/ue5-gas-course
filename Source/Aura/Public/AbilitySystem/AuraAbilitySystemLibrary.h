@@ -58,4 +58,6 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "GameplayMechanics")
 	static bool IsNotFriendly(AActor* FirstActor, AActor* SecondActor);
+
+	static int32 GetExpForClassAndLevel(const UObject* WorldContextObject, ECharacterClass CharacterClass, int32 CharacterLevel);
 };
