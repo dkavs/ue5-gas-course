@@ -28,7 +28,7 @@ public:
 	virtual void UnHighlight() override;
 
 	// Inherited via ICombatInterface
-	virtual int32 GetCharacterLevel() override;
+	virtual int32 GetCharacterLevel_Implementation() override;
 	virtual void BeginPlay() override;
 
 

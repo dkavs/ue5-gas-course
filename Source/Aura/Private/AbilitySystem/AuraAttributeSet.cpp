@@ -162,12 +162,59 @@ void UAuraAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 		{
 
 			// TODO: See if we should level up 
-			UE_LOG(LogTemp, Warning, TEXT("%s Gained Experience! amount %f "), *EffectProperties.TargetAvatarActor->GetName(), LocalIncoming);
-			if (EffectProperties.SourceCharacter->Implements<UPlayerInterface>())
+			UE_LOG(LogTemp, Warning, TEXT("%s Gained Experience! amount %f "), *EffectProperties.SourceCharacter->GetName(), LocalIncoming);
+			if (EffectProperties.SourceCharacter->Implements<UPlayerInterface>() && EffectProperties.SourceCharacter->Implements<UCombatInterface>())
 			{
+				const int32 CurrentExperience = IPlayerInterface::Execute_GetExperience(EffectProperties.SourceCharacter);
+				const int32 CurrentLevel = ICombatInterface::Execute_GetCharacterLevel(EffectProperties.SourceCharacter);
+
+				const int32 NewLevel = IPlayerInterface::Execute_FindLevelForExperience(EffectProperties.SourceCharacter, CurrentExperience + LocalIncoming);
+				UE_LOG(LogTemp, Warning, TEXT("Current EXP: %d  CurrentLevel: %d. NewLevel: %d"), CurrentExperience, CurrentLevel, NewLevel);
+				if (CurrentLevel != NewLevel)
+				{
+					const int32 LevelUps = NewLevel - CurrentLevel;
+
+					// TODO: I think we need to get the reward for each level up?
+					// Should this attribute/spell reward stuff belong on the player itself as a part of "level up"?
+					// TODO: Do I reward for STARTING this level or FINISHING this level?
+					// Using CUrrentLevel means "Reward this when completing this level" vs "Reward when reaching this level"
+					int32 AttributesReward = IPlayerInterface::Execute_GetAttributePointsReward(EffectProperties.SourceCharacter, CurrentLevel);
+					int32 SpellPointsReward = IPlayerInterface::Execute_GetSpellPointsReward(EffectProperties.SourceCharacter, CurrentLevel);
+					
+					UE_LOG(LogTemp, Warning, TEXT("Level Up AttributeReward: %d  SpellPoint Reward: %d"), AttributesReward, SpellPointsReward);
+					IPlayerInterface::Execute_AddToPlayerLevel(EffectProperties.SourceCharacter, LevelUps);
+					IPlayerInterface::Execute_AddToAttributePoints(EffectProperties.SourceCharacter, AttributesReward);
+					IPlayerInterface::Execute_AddToSpellPoints(EffectProperties.SourceCharacter, SpellPointsReward);
+
+					// Because this executes before the MMC for max health, this doesn't actually fill up
+					//SetHealth(GetMaxHealth());
+					//SetMana(GetMaxMana());
+
+					bTopOffHealth = true;
+					bTopOffMana = true;
+
+					IPlayerInterface::Execute_LevelUp(EffectProperties.SourceCharacter);
+				}
 				IPlayerInterface::Execute_AddToExperience(EffectProperties.SourceCharacter, LocalIncoming);
+
 			}
 		}
+	}
+}
+
+void UAuraAttributeSet::PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue)
+{
+	Super::PostAttributeChange(Attribute, OldValue, NewValue);
+	if (bTopOffHealth && Attribute == GetMaxHealthAttribute())
+	{
+		SetHealth(GetMaxHealth());
+		bTopOffHealth = false;
+	}
+
+	if (bTopOffMana && Attribute == GetMaxManaAttribute())
+	{
+		SetMana(GetMaxMana());
+		bTopOffMana = false;
 	}
 }
 
@@ -178,8 +225,7 @@ void UAuraAttributeSet::SetEffectProperties(const FGameplayEffectModCallbackData
 	UAbilitySystemComponent* SourceASC = Props.EffectContextHandle.GetOriginalInstigatorAbilitySystemComponent();
 	Props.SourceASC = SourceASC;
 
-	if (IsValid(SourceASC) && SourceASC->AbilityActorInfo.IsValid() && SourceASC
-		->AbilityActorInfo->AvatarActor.IsValid())
+	if (IsValid(SourceASC) && SourceASC->AbilityActorInfo.IsValid() && SourceASC->AbilityActorInfo->AvatarActor.IsValid())
 	{
 		AActor* SourceAvatarActor = SourceASC->AbilityActorInfo->AvatarActor.Get();
 		AController* SourceController = SourceASC->AbilityActorInfo->PlayerController.Get();
@@ -234,7 +280,7 @@ void UAuraAttributeSet::SendExperienceEvent(const FEffectProperties& EffectPrope
 {
 	if (ICombatInterface* CombatInterface = Cast<ICombatInterface>(EffectProperties.TargetCharacter))
 	{
-		const int32 TargetLevel = CombatInterface->GetCharacterLevel();
+		const int32 TargetLevel = ICombatInterface::Execute_GetCharacterLevel(EffectProperties.TargetCharacter);
 		const ECharacterClass TargetClass = CombatInterface->Execute_GetCharacterClass(EffectProperties.TargetCharacter);
 		const int32 Experience = UAuraAbilitySystemLibrary::GetExpForClassAndLevel(EffectProperties.TargetCharacter, TargetClass, TargetLevel);
 		const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();

@@ -6,14 +6,14 @@
 #include "AbilitySystem/AuraAbilitySystemComponent.h"
 #include "AbilitySystem/Data/AbilityInfo.h"
 #include "AttributeSet.h"
+#include "AuraGameplayTags.h"
 #include "GameplayEffectTypes.h"
 #include "Player/AuraPlayerState.h"
 #include "Player/LevelInfo.h"
 
 void UOverlayWidgetController::BroadcastInitialValues()
 {
-	Super::BroadcastInitialValues();
-	const UAuraAttributeSet* AuraAttributes = Cast<UAuraAttributeSet>(AttributeSet);
+	const UAuraAttributeSet* AuraAttributes = GetAuraAS();
 	
 	OnHealthChanged.Broadcast(AuraAttributes->GetHealth());
 	OnMaxHealthChanged.Broadcast(AuraAttributes->GetMaxHealth());
@@ -23,13 +23,11 @@ void UOverlayWidgetController::BroadcastInitialValues()
 
 void UOverlayWidgetController::BindCallbacksToDependencies()
 {
-	Super::BindCallbacksToDependencies();
-	const UAuraAttributeSet* AuraAttributes = Cast<UAuraAttributeSet>(AttributeSet);
-	const UAuraAbilitySystemComponent* AuraAbilitySystemComponent = CastChecked<UAuraAbilitySystemComponent>(AbilitySystemComponent);
+	const UAuraAttributeSet* AuraAttributes = GetAuraAS();
 	
-	AAuraPlayerState* AuraPlayerState = CastChecked<AAuraPlayerState>(PlayerState);
-	AuraPlayerState->ExperienceChangedDelegate.AddUObject(this, &UOverlayWidgetController::OnExperienceChanged);
-	AuraPlayerState->PlayerLevelChangedDelegate.AddUObject(this, &UOverlayWidgetController::OnLevelChanged);
+	AAuraPlayerState* AuraPS = GetAuraPS();
+	AuraPS->ExperienceChangedDelegate.AddUObject(this, &UOverlayWidgetController::OnExperienceChanged);
+	AuraPS->PlayerLevelChangedDelegate.AddUObject(this, &UOverlayWidgetController::OnLevelChanged);
 	
 	
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
@@ -50,15 +48,16 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 		});
 
 
-	if (UAuraAbilitySystemComponent* AuraASC = Cast<UAuraAbilitySystemComponent>(AbilitySystemComponent))
+	if (UAuraAbilitySystemComponent* AuraASC = GetAuraASC())
 	{
+		AuraASC->AbilityEquippedDelegate.AddUObject(this, &UOverlayWidgetController::OnAbilityEquipped);
 		if (AuraASC->bStartupAbilitiesGiven)
 		{
-			OnInitializeStartupAbilities(AuraASC);
+			BroadcastAbilityInfo();
 		}
 		else
 		{
-			AuraASC->AbilitiesGivenDelegate.AddUObject(this, &UOverlayWidgetController::OnInitializeStartupAbilities);
+			AuraASC->AbilitiesGivenDelegate.AddUObject(this, &UOverlayWidgetController::BroadcastAbilityInfo);
 		}
 
 		AuraASC->EffectAssetTags.AddLambda([this](const FGameplayTagContainer AssetTags) {
@@ -77,29 +76,10 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 	
 }
 
-void UOverlayWidgetController::OnInitializeStartupAbilities(UAuraAbilitySystemComponent* AuraASC)
+void UOverlayWidgetController::OnExperienceChanged(int NewExperience)
 {
-	if (!AuraASC->bStartupAbilitiesGiven)
-	{
-		return;
-	}
-
-	FForEachAbility BroadcastDelegate;
-	BroadcastDelegate.BindLambda([this, AuraASC](const FGameplayAbilitySpec& AbilitySpec) {
-		// TODO: Need a way to get ability tag from Ability Spec
-		FAuraAbilityInfo Info = AbilityInfo->FindAbilityInfoForTag(UAuraAbilitySystemComponent::GetAbilityTagFromSpec(AbilitySpec));
-		Info.InputTag = AuraASC->GetInputTagFromSpec(AbilitySpec);
-
-		AbilityInfoDelegate.Broadcast(Info);
-	});
-
-	AuraASC->ForEachAbility(BroadcastDelegate);
-}
-
-void UOverlayWidgetController::OnExperienceChanged(int NewExperience) const
-{
-	const AAuraPlayerState* AuraPlayerState = CastChecked<AAuraPlayerState>(PlayerState);
-	const ULevelInfo* LevelInfo = AuraPlayerState->GetPlayerLevelInfo();
+	AAuraPlayerState* AuraPS = GetAuraPS();
+	const ULevelInfo* LevelInfo = AuraPS->GetPlayerLevelInfo();
 
 	/*
 	
@@ -108,7 +88,7 @@ void UOverlayWidgetController::OnExperienceChanged(int NewExperience) const
 	
 	*/
 
-	const int32 Level = AuraPlayerState->GetPlayerLevel();
+	const int32 Level = AuraPS->GetPlayerLevel();
 	const int32 MaxLevel = LevelInfo->LevelInfo.Num();
 
 	const int32 CurrentLevelReq = LevelInfo->GetExpRequiredForLevel(Level);
@@ -139,4 +119,21 @@ void UOverlayWidgetController::OnExperienceChanged(int NewExperience) const
 void UOverlayWidgetController::OnLevelChanged(int NewLevel) const
 {
 	PlayerLevelChanged.Broadcast(NewLevel);
+}
+
+void UOverlayWidgetController::OnAbilityEquipped(const FGameplayTag& AbilityTag, const FGameplayTag& StateTag, const FGameplayTag& SlotTag, const FGameplayTag& PrevSlotTag) const
+{
+	const FAuraGameplayTags GameplayTags = FAuraGameplayTags::Get();
+	FAuraAbilityInfo LastSlotInfo;
+
+	LastSlotInfo.StateTag = GameplayTags.Abilities_State_Unlocked;
+	LastSlotInfo.InputTag = PrevSlotTag;
+	LastSlotInfo.AbilityTag = GameplayTags.Abilities_None;
+	// Broadcast empty info if previous slot is a valid slot. Only if equipping an already equipped slot
+	AbilityInfoDelegate.Broadcast(LastSlotInfo);
+
+	FAuraAbilityInfo Info = AbilityInfo->FindAbilityInfoForTag(AbilityTag);
+	Info.StateTag = StateTag;
+	Info.InputTag = SlotTag;
+	AbilityInfoDelegate.Broadcast(Info);
 }

@@ -54,11 +54,27 @@ public:
 	FGameplayTag Damage_Lightning;
 	FGameplayTag Damage_Physical;
 
+
+	FGameplayTag Abilities_None;
 	FGameplayTag Abilities_Attack;
 	FGameplayTag Abilities_Summon;
 
+	FGameplayTag Abilities_HitReact;
+
+	FGameplayTag Abilities_State_Locked;
+	FGameplayTag Abilities_State_Eligible;
+	FGameplayTag Abilities_State_Unlocked;
+	FGameplayTag Abilities_State_Equipped;
+
+	FGameplayTag Abilities_Type_Active;
+	FGameplayTag Abilities_Type_Passive;
+	FGameplayTag Abilities_Type_None;
+
 	FGameplayTag Abilities_Fire_FireBolt;
 	FGameplayTag Cooldown_Fire_FireBolt;
+
+	FGameplayTag Abilities_Lightning_Electrocute;
+	FGameplayTag Cooldown_Lightning_Electrocute;
 
 	FGameplayTag CombatSocket_Weapon;
 	FGameplayTag CombatSocket_Hand_L;

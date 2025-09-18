@@ -8,6 +8,7 @@
 
 
 class UCharacterClassInfo;
+class UAbilityInfo;
 
 /**
  * 
@@ -21,4 +22,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<UCharacterClassInfo> CharacterClassInfo;
+
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<UAbilityInfo> AbilityInfo;
 };

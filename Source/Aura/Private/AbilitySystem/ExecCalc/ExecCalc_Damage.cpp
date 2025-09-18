@@ -87,8 +87,20 @@ void UExecCalc_Damage::Execute_Implementation(const FGameplayEffectCustomExecuti
 	AActor* SourceActor = SourceASC ? SourceASC->GetAvatarActor() : nullptr;
 	AActor* TargetActor = SourceASC ? TargetASC->GetAvatarActor() : nullptr;
 
-	ICombatInterface* SourceCombatInterface = Cast<ICombatInterface>(SourceActor);
-	ICombatInterface* TargetCombatInterface = Cast<ICombatInterface>(TargetActor);
+
+	int32 SourceLevel = 1;
+	if (SourceActor->Implements<UCombatInterface>())
+	{
+		SourceLevel = ICombatInterface::Execute_GetCharacterLevel(SourceActor);
+	}
+	int32 TargetLevel = 1;
+	if (TargetActor->Implements<UCombatInterface>())
+	{
+		TargetLevel = ICombatInterface::Execute_GetCharacterLevel(TargetActor);
+	}
+
+	//ICombatInterface* SourceCombatInterface = Cast<ICombatInterface>(SourceActor);
+	//ICombatInterface* TargetCombatInterface = Cast<ICombatInterface>(TargetActor);
 
 	const FGameplayEffectSpec& Spec = ExecutionParams.GetOwningSpec();
 
@@ -103,8 +115,6 @@ void UExecCalc_Damage::Execute_Implementation(const FGameplayEffectCustomExecuti
 	const FRealCurve* ArmorPenCurve = CharacterClassInfo->DamageCoefficientsTable->FindCurve(FName("ArmorPenetration"), FString());
 	const FRealCurve* EffectiveArmorCurve = CharacterClassInfo->DamageCoefficientsTable->FindCurve(FName("EffectiveArmor"), FString());
 	const FRealCurve* CritResistCurve = CharacterClassInfo->DamageCoefficientsTable->FindCurve(FName("CritResist"), FString());
-	const int PlayerLevel = SourceCombatInterface->GetCharacterLevel();
-	const int TargetLevel = TargetCombatInterface->GetCharacterLevel();
 
 	FGameplayEffectContextHandle ContextHandle = Spec.GetContext();
 	
@@ -168,8 +178,8 @@ void UExecCalc_Damage::Execute_Implementation(const FGameplayEffectCustomExecuti
 
 	
 	
-	const float ArmorPenCoef = ArmorPenCurve->Eval(PlayerLevel);
-	const float EffectiveArmorCoef = EffectiveArmorCurve->Eval(PlayerLevel);
+	const float ArmorPenCoef = ArmorPenCurve->Eval(SourceLevel);
+	const float EffectiveArmorCoef = EffectiveArmorCurve->Eval(SourceLevel);
 	// Note: In the course he uses an armor penetration value and uses a formula to make 400 armor pen = 100% penetration.
 	// I'm going to keep it simple and be a flat 0-1%
 	const float EffectiveArmor = TargetArmor * (1.f - (SourceArmorPen * ArmorPenCoef));
