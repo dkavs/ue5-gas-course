@@ -1,12 +1,12 @@
 // Copyright Giant Rocket Games
 
-#include "AuraGameplayTags.h"
 #include "AbilitySystem/Abilities/AuraFirebolt.h"
+#include "AuraGameplayTags.h"
 
 
 FString UAuraFirebolt::GetDescription(int32 AbilityLevel)
 {
-	const int32 Damage = GetDamageByType(AbilityLevel, FAuraGameplayTags::Get().Damage_Fire);
+	const int32 ScaledDamage = Damage.GetValueAtLevel(AbilityLevel);
 	const float ManaCost = FMath::Abs(GetManaCost(AbilityLevel));
 	const float Cooldown = GetCooldown(AbilityLevel);
 
@@ -21,7 +21,7 @@ FString UAuraFirebolt::GetDescription(int32 AbilityLevel)
 			AbilityLevel,
 			ManaCost,
 			Cooldown,
-			Damage);
+			ScaledDamage);
 	}
 	else
 	{
@@ -36,13 +36,13 @@ FString UAuraFirebolt::GetDescription(int32 AbilityLevel)
 			ManaCost,
 			Cooldown,
 			CurProjectiles,
-			Damage);
+			ScaledDamage);
 	}
 }
 
 FString UAuraFirebolt::GetNextLevelDescription(int32 AbilityLevel)	
 {
-	const int32 Damage = GetDamageByType(AbilityLevel, FAuraGameplayTags::Get().Damage_Fire);
+	const int32 ScaledDamage = Damage.GetValueAtLevel(AbilityLevel);
 	const float ManaCost = FMath::Abs(GetManaCost(AbilityLevel));
 	const float Cooldown = GetCooldown(AbilityLevel);
 	int32 CurProjectiles = FMath::Min(AbilityLevel, Projectiles);
@@ -56,5 +56,5 @@ FString UAuraFirebolt::GetNextLevelDescription(int32 AbilityLevel)
 		ManaCost,
 		Cooldown,
 		CurProjectiles,
-		Damage);
+		ScaledDamage);
 }

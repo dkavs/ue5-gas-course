@@ -8,8 +8,10 @@
 #include "AbilitySystemComponent.h"
 #include "Player/AuraPlayerState.h"
 #include "AuraAbilityTypes.h"
+#include "AuraGameplayTags.h"
 #include "UI/WidgetController/AuraWidgetController.h"
 #include "Interaction/CombatInterface.h"
+#include "AbilitySystemBlueprintLibrary.h"
 
 
 bool UAuraAbilitySystemLibrary::MakeWidgetControllerParams(const UObject* WorldContextObject, FWidgetControllerParams& OutWCParams, AAuraHUD*& OutAuraHUD)
@@ -219,6 +221,27 @@ bool UAuraAbilitySystemLibrary::IsNotFriendly(AActor* FirstActor, AActor* Second
     const bool bSecondIsEnemy = SecondActor->ActorHasTag(FName("Enemy"));
     
     return (bFirstIsPlayer && bSecondIsEnemy) || (bFirstIsEnemy && bSecondIsPlayer) || (!bSecondIsPlayer && !bSecondIsEnemy);
+}
+
+FGameplayEffectContextHandle UAuraAbilitySystemLibrary::ApplyDamageEffect(const FDamageEffectParams& DamageEffectParams)
+{
+    const AActor* SourceAvatarActor = DamageEffectParams.SourceASC->GetAvatarActor();
+    const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
+
+    FGameplayEffectContextHandle EffectContextHandle = DamageEffectParams.SourceASC->MakeEffectContext();
+    EffectContextHandle.AddSourceObject(SourceAvatarActor);
+    
+    FGameplayEffectSpecHandle DamageSpecHandle = DamageEffectParams.SourceASC->MakeOutgoingSpec(DamageEffectParams.DamageGameplayEffectClass, DamageEffectParams.AbilityLevel, EffectContextHandle);
+   
+    UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(DamageSpecHandle, DamageEffectParams.DamageType, DamageEffectParams.BaseDamage);
+    UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(DamageSpecHandle, GameplayTags.Debuff_Chance, DamageEffectParams.DebuffChance);
+    UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(DamageSpecHandle, GameplayTags.Debuff_Damage, DamageEffectParams.DebuffDamage);
+    UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(DamageSpecHandle, GameplayTags.Debuff_Duration, DamageEffectParams.DebuffDuration);
+    UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(DamageSpecHandle, GameplayTags.Debuff_Frequency, DamageEffectParams.DebuffFrequency);
+
+    DamageEffectParams.TargetASC->ApplyGameplayEffectSpecToSelf(*DamageSpecHandle.Data);
+
+    return EffectContextHandle;
 }
 
 
